@@ -10,6 +10,7 @@ from validate_email import validate_email
 import phonenumbers
 import logging
 from typing import Optional, Dict, Any
+import pytz
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -65,10 +66,13 @@ class Utils:
 
     @staticmethod
     def log_activity(db: DatabaseManager, user_id: str, action: str):
+        ist = pytz.timezone('Asia/Kolkata')
+        current_time = datetime.now(ist)
+        
         db.activity_collection.insert_one({
             "user_id": user_id,
             "action": action,
-            "timestamp": datetime.utcnow()
+            "timestamp": current_time
         })
 
 class AuthenticationSystem:
@@ -79,17 +83,52 @@ class AuthenticationSystem:
     def handle_registration(self):
         st.title("Register")
         
+        # Initialize session state for form fields
+        if 'registration_form' not in st.session_state:
+            st.session_state.registration_form = {
+                'first_name': '',
+                'last_name': '',
+                'email': '',
+                'mobile': '',
+                'password': '',
+                'confirm_password': ''
+            }
+        
         with st.form("register_form", clear_on_submit=True):
             col1, col2 = st.columns(2)
             with col1:
-                first_name = st.text_input("First Name")
-                email = st.text_input("Email")
-                password = st.text_input("Password", type="password")
+                first_name = st.text_input("First Name", 
+                    value=st.session_state.registration_form['first_name'],
+                    key="first_name_input")
+                email = st.text_input("Email",
+                    value=st.session_state.registration_form['email'],
+                    key="email_input")
+                password = st.text_input("Password", 
+                    type="password",
+                    value=st.session_state.registration_form['password'],
+                    key="password_input")
                 
             with col2:
-                last_name = st.text_input("Last Name")
-                mobile = st.text_input("Mobile Number")
-                confirm_password = st.text_input("Confirm Password", type="password")
+                last_name = st.text_input("Last Name",
+                    value=st.session_state.registration_form['last_name'],
+                    key="last_name_input")
+                mobile = st.text_input("Mobile Number",
+                    value=st.session_state.registration_form['mobile'],
+                    key="mobile_input")
+                confirm_password = st.text_input("Confirm Password",
+                    type="password",
+                    value=st.session_state.registration_form['confirm_password'],
+                    key="confirm_password_input")
+
+            # Update session state
+            st.session_state.registration_form.update({
+                'first_name': first_name,
+                'last_name': last_name,
+                'email': email,
+                'mobile': mobile,
+                'password': password,
+                'confirm_password': confirm_password
+            })
 
             # Password requirements
             if password:
@@ -116,6 +155,9 @@ class AuthenticationSystem:
                     st.error("Please accept the Terms and Conditions.")
                 else:
                     try:
+                        ist = pytz.timezone('Asia/Kolkata')
+                        current_time = datetime.now(ist)
+                        
                         hashed_password = self.utils.hash_password(password)
                         self.db.users_collection.insert_one({
                             "first_name": first_name,
@@ -124,10 +166,18 @@ class AuthenticationSystem:
                             "mobile": mobile,
                             "password": hashed_password,
                             "status": "no",
-                            "created_at": datetime.utcnow(),
+                            "created_at": current_time,
                             "last_login": None
                         })
                         st.success("Registration successful! Please wait for admin approval.")
+                        st.session_state.registration_form = {
+                            'first_name': '',
+                            'last_name': '',
+                            'email': '',
+                            'mobile': '',
+                            'password': '',
+                            'confirm_password': ''
+                        }
                         st.session_state.page = "login"
                     except Exception as e:
                         if "duplicate key error" in str(e):
@@ -140,8 +190,8 @@ class AuthenticationSystem:
         st.title("Login")
 
         with st.form("login_form"):
-            identifier = st.text_input("Email or Mobile Number")
-            password = st.text_input("Password", type="password")
+            identifier = st.text_input("Email or Mobile Number", key="login_identifier")
+            password = st.text_input("Password", type="password", key="login_password")
             submitted = st.form_submit_button("Login")
 
             if submitted:
@@ -159,9 +209,12 @@ class AuthenticationSystem:
                 elif user['status'] == "no":
                     st.error("Your account is not active. Contact admin.")
                 else:
+                    ist = pytz.timezone('Asia/Kolkata')
+                    current_time = datetime.now(ist)
+                    
                     self.db.users_collection.update_one(
                         {"_id": user['_id']},
-                        {"$set": {"last_login": datetime.utcnow()}}
+                        {"$set": {"last_login": current_time}}
                     )
                     self.utils.log_activity(self.db, str(user['_id']), "login")
                     st.success(f"Welcome {user['first_name']} {user['last_name']}!")
@@ -180,7 +233,6 @@ class AdminPanel:
         if not self._verify_admin():
             return
 
-        # Improved navigation with tabs
         tabs = st.tabs(["📊 Analytics", "👥 User Management", "📝 Activity Logs"])
         
         with tabs[0]:
@@ -202,7 +254,6 @@ class AdminPanel:
         users = list(self.db.users_collection.find())
         user_df = pd.DataFrame(users)
         
-        # Enhanced filter options
         col1, col2 = st.columns([2, 3])
         with col1:
             status_filter = st.multiselect("Filter by Status", ["yes", "no", "admin"])
@@ -219,28 +270,23 @@ class AdminPanel:
             )
             user_df = user_df[mask]
 
-        # Display users in a modern card layout
         for _, user in user_df.iterrows():
             with st.container():
-                st.markdown("""
-                    <style>
-                        .user-card {
-                            border: 1px solid #e1e4e8;
-                            border-radius: 6px;
-                            padding: 16px;
-                            margin: 8px 0;
-                        }
-                    </style>
-                """, unsafe_allow_html=True)
-                
                 with st.expander(f"👤 {user['first_name']} {user['last_name']} ({user['email']})"):
                     col1, col2 = st.columns([3, 1])
                     
                     with col1:
                         st.write(f"📱 Mobile: {user['mobile']}")
                         st.write(f"🔵 Status: {user['status']}")
-                        st.write(f"📅 Created: {user['created_at'].strftime('%Y-%m-%d %H:%M')}")
-                        st.write(f"🕒 Last Login: {user.get('last_login', 'Never')}")
+                        # Convert timestamps to IST
+                        ist = pytz.timezone('Asia/Kolkata')
+                        created_at = user['created_at'].astimezone(ist)
+                        last_login = user.get('last_login')
+                        if last_login:
+                            last_login = last_login.astimezone(ist)
+                        
+                        st.write(f"📅 Created: {created_at.strftime('%Y-%m-%d %H:%M:%S IST')}")
+                        st.write(f"🕒 Last Login: {last_login.strftime('%Y-%m-%d %H:%M:%S IST') if last_login else 'Never'}")
                     
                     with col2:
                         if user['status'] == "no":
@@ -272,11 +318,9 @@ class AdminPanel:
     def _analytics(self):
         st.subheader("Analytics Dashboard")
         
-        # Fetch user data
         users = list(self.db.users_collection.find())
         df = pd.DataFrame(users)
         
-        # Key Metrics
         col1, col2, col3, col4 = st.columns(4)
         total_users = len(users)
         active_users = len([u for u in users if u['status'] == "yes"])
@@ -288,13 +332,13 @@ class AdminPanel:
         col3.metric("⏳ Pending", pending_users)
         col4.metric("👑 Admins", admin_users)
         
-        # Time-based Analysis
         st.subheader("User Growth Analysis")
         
-        df['created_at'] = pd.to_datetime(df['created_at'])
+        # Convert timestamps to IST
+        ist = pytz.timezone('Asia/Kolkata')
+        df['created_at'] = pd.to_datetime(df['created_at']).apply(lambda x: x.astimezone(ist))
         df['date'] = df['created_at'].dt.date
         
-        # Registration Trend
         daily_registrations = df.groupby('date').size().reset_index(name='count')
         
         fig = go.Figure()
@@ -314,7 +358,6 @@ class AdminPanel:
         )
         st.plotly_chart(fig, use_container_width=True)
         
-        # User Status Distribution
         status_dist = df['status'].value_counts()
         fig_pie = px.pie(
             values=status_dist.values,
@@ -327,25 +370,25 @@ class AdminPanel:
     def _activity_logs(self):
         st.subheader("Activity Logs")
         
-        # Fetch and prepare activity logs
         logs = list(self.db.activity_collection.find().sort("timestamp", -1).limit(100))
         if logs:
             log_df = pd.DataFrame(logs)
-            log_df['timestamp'] = pd.to_datetime(log_df['timestamp'])
+            
+            # Convert timestamps to IST
+            ist = pytz.timezone('Asia/Kolkata')
+            log_df['timestamp'] = pd.to_datetime(log_df['timestamp']).apply(lambda x: x.astimezone(ist))
             
             # Activity Visualization
-            # Using scatter plot instead of timeline
             fig = px.scatter(
                 log_df,
                 x="timestamp",
                 y="action",
                 title="Recent Activity Visualization",
                 color="action",
-                size=[10] * len(log_df),  # Constant size for all points
+                size=[10] * len(log_df),
                 template="plotly_white"
             )
             
-            # Customize the layout
             fig.update_traces(marker=dict(symbol='circle'))
             fig.update_layout(
                 showlegend=True,
@@ -361,7 +404,6 @@ class AdminPanel:
             st.subheader("Activity Summary")
             activity_counts = log_df['action'].value_counts()
             
-            # Create a bar chart for activity distribution
             fig_bar = px.bar(
                 x=activity_counts.index,
                 y=activity_counts.values,
@@ -376,9 +418,8 @@ class AdminPanel:
             # Detailed Log Table
             st.subheader("Detailed Activity Log")
             styled_df = log_df.copy()
-            styled_df['timestamp'] = styled_df['timestamp'].dt.strftime("%Y-%m-%d %H:%M:%S")
+            styled_df['timestamp'] = styled_df['timestamp'].dt.strftime("%Y-%m-%d %H:%M:%S IST")
             
-            # Enhanced table display
             st.dataframe(
                 styled_df[['timestamp', 'user_id', 'action']].sort_values(by='timestamp', ascending=False),
                 column_config={
@@ -421,117 +462,22 @@ class UserDashboard:
         with tabs[3]:
             self._show_multiplication_table()
 
-    def _show_multiplication_table(self):
-        st.subheader("Multiplication Table of 10")
-        
-        # Create two columns for the main content
-        col1, col2 = st.columns([2, 3])
-        
-        with col1:
-            # Numerical representation
-            st.markdown("### Numerical Table")
-            # Create table data more efficiently using list comprehension
-            table_data = [(i, i * 10) for i in range(1, 11)]
-            table_df = pd.DataFrame(table_data, columns=['Number', 'Result'])
-            
-            # Improved dataframe display with better column configuration
-            st.dataframe(
-                table_df,
-                column_config={
-                    "Number": st.column_config.NumberColumn(
-                        "Number",
-                        format="%d",
-                        help="The multiplier"
-                    ),
-                    "Result": st.column_config.NumberColumn(
-                        "10 ×",
-                        format="%d",
-                        help="The product of the number and 10"
-                    )
-                },
-                hide_index=True,
-                use_container_width=True
-            )
-            
-            # Add a fun fact with better styling
-            st.info("💡 Fun Fact: Multiplying by 10 is the same as adding a zero to the end of a number!")
-        
-        with col2:
-            # Visual representation with improved styling
-            fig = px.bar(
-                table_df,
-                x='Number',
-                y='Result',
-                title='Visual Representation of 10\'s Table',
-                labels={'Number': 'Multiplier', 'Result': 'Product'},
-                text='Result'
-            )
-            
-            # Enhanced chart styling
-            fig.update_traces(
-                textposition='outside',
-                marker_color='rgb(255, 127, 80)',  # Coral color
-                marker_line_color='rgb(205, 92, 92)',  # Darker border
-                marker_line_width=1.5
-            )
-            
-            fig.update_layout(
-                showlegend=False,
-                plot_bgcolor='rgba(0,0,0,0)',
-                xaxis_gridcolor='rgba(0,0,0,0.1)',
-                yaxis_gridcolor='rgba(0,0,0,0.1)',
-                title_x=0.5,  # Center the title
-                height=400  # Fixed height for better presentation
-            )
-            
-            st.plotly_chart(fig, use_container_width=True)
-        
-        # Interactive Practice Section with improved layout
-        st.markdown("### Practice Section")
-        col3, col4 = st.columns([1, 2])
-        
-        with col3:
-            try:
-                number = st.number_input(
-                    "Enter a number to multiply by 10",
-                    min_value=1,
-                    max_value=100,
-                    value=1,
-                    help="Choose a number between 1 and 100"
-                )
-            except Exception as e:
-                st.error(f"Please enter a valid number: {str(e)}")
-                return
-        
-        with col4:
-            result = number * 10
-            st.markdown(
-                f"<h3 style='color: #FF7F50;'>{number} × 10 = {result}</h3>",
-                unsafe_allow_html=True
-            )
-        
-        # Progress bar with better styling and tooltip
-        progress_value = number/100
-        st.progress(
-            progress_value,
-            text=f"Progress: {int(progress_value * 100)}%"
-        )
     def _show_dashboard(self):
         st.subheader("Your Activity")
         
-        # Fetch user's activity logs
-        logs = list(self.db.activity_collection.find({"user_id": str(self.user['_id'])}
-        ).sort("timestamp", -1))
+        logs = list(self.db.activity_collection.find({"user_id": str(self.user['_id'])}).sort("timestamp", -1))
         
         if logs:
             log_df = pd.DataFrame(logs)
-            log_df['timestamp'] = pd.to_datetime(log_df['timestamp'])
+            
+            # Convert timestamps to IST
+            ist = pytz.timezone('Asia/Kolkata')
+            log_df['timestamp'] = pd.to_datetime(log_df['timestamp']).apply(lambda x: x.astimezone(ist))
             
             # Activity Summary
             col1, col2 = st.columns(2)
             
             with col1:
-                # Recent Activity Chart
                 activity_counts = log_df['action'].value_counts()
                 fig = px.pie(
                     values=activity_counts.values,
@@ -542,7 +488,6 @@ class UserDashboard:
                 st.plotly_chart(fig, use_container_width=True)
             
             with col2:
-                # Activity Timeline
                 fig = px.scatter(
                     log_df,
                     x='timestamp',
@@ -552,17 +497,15 @@ class UserDashboard:
                 )
                 st.plotly_chart(fig, use_container_width=True)
             
-            # Recent Activity List
             st.subheader("Recent Activities")
             for _, log in log_df.head(5).iterrows():
-                st.write(f"🔹 {log['action']} - {log['timestamp'].strftime('%Y-%m-%d %H:%M')}")
+                st.write(f"🔹 {log['action']} - {log['timestamp'].strftime('%Y-%m-%d %H:%M:%S IST')}")
         else:
             st.info("No activity recorded yet")
 
     def _show_profile(self):
         st.subheader("My Profile")
         
-        # Profile Information
         col1, col2 = st.columns(2)
         
         with col1:
@@ -582,14 +525,21 @@ class UserDashboard:
                 </div>
             """, unsafe_allow_html=True)
             st.write(f"**Account Status:** {self.user['status']}")
-            st.write(f"**Last Login:** {self.user.get('last_login', 'Never')}")
-            st.write(f"**Account Created:** {self.user['created_at'].strftime('%Y-%m-%d %H:%M')}")
+            
+            # Convert timestamps to IST
+            ist = pytz.timezone('Asia/Kolkata')
+            last_login = self.user.get('last_login')
+            if last_login:
+                last_login = last_login.astimezone(ist)
+            created_at = self.user['created_at'].astimezone(ist)
+            
+            st.write(f"**Last Login:** {last_login.strftime('%Y-%m-%d %H:%M:%S IST') if last_login else 'Never'}")
+            st.write(f"**Account Created:** {created_at.strftime('%Y-%m-%d %H:%M:%S IST')}")
 
     def _show_settings(self):
         st.subheader("Settings")
         
         with st.form("settings_form"):
-            # Personal Information Section
             st.markdown("### Personal Information")
             col1, col2 = st.columns(2)
             
@@ -601,7 +551,6 @@ class UserDashboard:
                 last_name = st.text_input("Last Name", value=self.user['last_name'])
                 mobile = st.text_input("Mobile", value=self.user['mobile'], disabled=True)
             
-            # Password Change Section
             st.markdown("### Change Password")
             col3, col4 = st.columns(2)
             
@@ -651,7 +600,6 @@ class UserDashboard:
                         )
                         self.utils.log_activity(self.db, str(self.user['_id']), "profile_updated")
                         st.success("Profile updated successfully!")
-                        # Update session state
                         updated_user = self.db.users_collection.find_one({"_id": self.user['_id']})
                         st.session_state['user'] = updated_user
                         st.rerun()
@@ -661,6 +609,93 @@ class UserDashboard:
                 else:
                     st.error("Please enter your current password to save changes.")
 
+    def _show_multiplication_table(self):
+        st.subheader("Multiplication Table of 10")
+        
+        col1, col2 = st.columns([2, 3])
+        
+        with col1:
+            st.markdown("### Numerical Table")
+            table_data = [(i, i * 10) for i in range(1, 11)]
+            table_df = pd.DataFrame(table_data, columns=['Number', 'Result'])
+            
+            st.dataframe(
+                table_df,
+                column_config={
+                    "Number": st.column_config.NumberColumn(
+                        "Number",
+                        format="%d",
+                        help="The multiplier"
+                    ),
+                    "Result": st.column_config.NumberColumn(
+                        "10 ×",
+                        format="%d",
+                        help="The product of the number and 10"
+                    )
+                },
+                hide_index=True,
+                use_container_width=True
+            )
+            
+            st.info("💡 Fun Fact: Multiplying by 10 is the same as adding a zero to the end of a number!")
+        
+        with col2:
+            fig = px.bar(
+                table_df,
+                x='Number',
+                y='Result',
+                title='Visual Representation of 10\'s Table',
+                labels={'Number': 'Multiplier', 'Result': 'Product'},
+                text='Result'
+            )
+            
+            fig.update_traces(
+                textposition='outside',
+                marker_color='rgb(255, 127, 80)',
+                marker_line_color='rgb(205, 92, 92)',
+                marker_line_width=1.5
+            )
+            
+            fig.update_layout(
+                showlegend=False,
+                plot_bgcolor='rgba(0,0,0,0)',
+                xaxis_gridcolor='rgba(0,0,0,0.1)',
+                yaxis_gridcolor='rgba(0,0,0,0.1)',
+                title_x=0.5,
+                height=400
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+        
+        st.markdown("### Practice Section")
+        col3, col4 = st.columns([1, 2])
+        
+        with col3:
+            try:
+                number = st.number_input(
+                    "Enter a number to multiply by 10",
+                    min_value=1,
+                    max_value=100,
+                    value=1,
+                    help="Choose a number between 1 and 100"
+                )
+            except Exception as e:
+                st.error(f"Please enter a valid number: {str(e)}")
+                return
+        
+        with col4:
+            result = number * 10
+            st.markdown(
+                f"<h3 style='color: #FF7F50;'>{number} × 10 = {result}</h3>",
+                unsafe_allow_html=True
+            )
+        
+        progress_value = number/100
+        st.progress(
+            progress_value,
+            text=f"Progress: {int(progress_value * 100)}%"
+        )
+
 def main():
     st.set_page_config(
         page_title="User Authentication System",
@@ -669,7 +704,6 @@ def main():
         initial_sidebar_state="expanded"
     )
     
-    # Custom CSS
     st.markdown("""
         <style>
         .stButton>button {
@@ -681,17 +715,14 @@ def main():
         </style>
         """, unsafe_allow_html=True)
     
-    # Initialize session state
     if 'logged_in' not in st.session_state:
         st.session_state.logged_in = False
     if 'page' not in st.session_state:
         st.session_state.page = "login"
     
-    # Initialize database connection
     db = DatabaseManager(username="abhishelke297127", password="Abhi%402971")
     auth_system = AuthenticationSystem(db)
     
-    # Sidebar navigation with improved styling
     with st.sidebar:
         st.title("🔐 Navigation")
         if st.session_state.logged_in:
@@ -706,7 +737,6 @@ def main():
             page = st.radio("Choose Option", ["🔑 Login", "📝 Register"])
             st.session_state.page = page.split()[-1].lower()
     
-    # Main content
     if st.session_state.logged_in:
         user = st.session_state.user
         if user['status'] == "admin":
@@ -723,3 +753,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
