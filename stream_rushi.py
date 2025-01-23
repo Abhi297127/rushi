@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 from pymongo import MongoClient
 import bcrypt
@@ -12,14 +13,27 @@ import logging
 from typing import Optional, Dict, Any
 import pytz
 import uuid
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO, 
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
-# MongoDB setup
 class DatabaseManager:
-    def __init__(self, username: str, password: str):
+    def __init__(self):
+        # Retrieve credentials from environment variables
+        username = os.getenv('MONGODB_USERNAME')
+        password = os.getenv('MONGODB_PASSWORD')
+        
+        if not username or not password:
+            raise ValueError("MongoDB credentials not configured")
+        
         self.connection_string = f"mongodb+srv://{username}:{password}@cluster0.uu8yq.mongodb.net/?retryWrites=true&w=majority"
         self.client = None
         self.db = None
@@ -33,9 +47,11 @@ class DatabaseManager:
             self.db = self.client["abhi"]
             self.users_collection = self.db["a"]
             self.activity_collection = self.db["activity_logs"]
+            
             # Create indexes
             self.users_collection.create_index("email", unique=True)
             self.users_collection.create_index("mobile", unique=True)
+            
             logger.info("Successfully connected to MongoDB")
         except Exception as e:
             logger.error(f"Database connection error: {str(e)}")
@@ -46,7 +62,8 @@ class Utils:
     def is_email_valid(email: str) -> bool:
         try:
             return validate_email(email)
-        except:
+        except Exception as e:
+            logger.warning(f"Email validation error: {e}")
             return False
 
     @staticmethod
@@ -54,7 +71,8 @@ class Utils:
         try:
             parsed_number = phonenumbers.parse(mobile, "IN")
             return phonenumbers.is_valid_number(parsed_number)
-        except:
+        except Exception as e:
+            logger.warning(f"Mobile validation error: {e}")
             return False
 
     @staticmethod
@@ -76,7 +94,181 @@ class Utils:
             "timestamp": current_time
         })
 
+    @staticmethod
+    def validate_password_strength(password: str) -> list:
+        """Enhanced password strength validation"""
+        validations = []
+        if len(password) < 12:
+            validations.append("Must be at least 12 characters long")
+        if not any(c.isupper() for c in password):
+            validations.append("Must contain at least one uppercase letter")
+        if not any(c.islower() for c in password):
+            validations.append("Must contain at least one lowercase letter")
+        if not any(c.isdigit() for c in password):
+            validations.append("Must contain at least one number")
+        if not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in password):
+            validations.append("Must contain at least one special character")
+        
+        return validations
+
 class AuthenticationSystem:
+    def __init__(self, db: DatabaseManager):
+        self.db = db
+        self.utils = Utils()
+        self.logger = logging.getLogger(__name__)
+
+    def handle_registration(self):
+        # Session state initialization (same as original code)
+        if 'registration_form' not in st.session_state:
+            st.session_state.registration_form = {
+                'first_name': '',
+                'last_name': '',
+                'email': '',
+                'mobile': '',
+                'password': '',
+                'confirm_password': ''
+            }
+        
+        form_key = f"register_form_{uuid.uuid4().hex}"
+        
+        with st.form(form_key, clear_on_submit=True):
+            # Form inputs (same as original code)
+            col1, col2 = st.columns(2)
+            with col1:
+                first_name = st.text_input("First Name", 
+                    value=st.session_state.registration_form['first_name'])
+            with col2:
+                last_name = st.text_input("Last Name",
+                    value=st.session_state.registration_form['last_name'])
+            
+            col3, col4 = st.columns(2)
+            with col3:
+                email = st.text_input("Email",
+                    value=st.session_state.registration_form['email'])
+            with col4:
+                mobile = st.text_input("Mobile Number",
+                    value=st.session_state.registration_form['mobile'])
+            
+            col5, col6 = st.columns(2)
+            with col5:
+                password = st.text_input("Password", 
+                    type="password",
+                    value=st.session_state.registration_form['password'])
+            with col6:
+                confirm_password = st.text_input("Confirm Password",
+                    type="password",
+                    value=st.session_state.registration_form['confirm_password'])
+
+            st.session_state.registration_form.update({
+                'first_name': first_name,
+                'last_name': last_name,
+                'email': email,
+                'mobile': mobile,
+                'password': password,
+                'confirm_password': confirm_password
+            })
+
+            # Enhanced password validation
+            password_validations = self.utils.validate_password_strength(password)
+
+            if password_validations:
+                st.warning("Password requirements:")
+                for validation in password_validations:
+                    st.warning(validation)
+
+            terms = st.checkbox("I agree to the Terms and Conditions")
+            submitted = st.form_submit_button("Register")
+
+            if submitted:
+                validation_errors = []
+
+                # Validation checks (same as original code)
+                if not first_name or len(first_name.strip()) < 2:
+                    validation_errors.append("First name must be at least 2 characters long")
+                if not last_name or len(last_name.strip()) < 2:
+                    validation_errors.append("Last name must be at least 2 characters long")
+                if not self.utils.is_email_valid(email):
+                    validation_errors.append("Invalid email format")
+                if not self.utils.is_mobile_valid(mobile):
+                    validation_errors.append("Invalid mobile number format")
+                if password != confirm_password:
+                    validation_errors.append("Passwords do not match")
+                if password_validations:
+                    validation_errors.append("Password does not meet requirements")
+                if not terms:
+                    validation_errors.append("Please accept the Terms and Conditions")
+
+                if validation_errors:
+                    for error in validation_errors:
+                        st.error(error)
+                else:
+                    try:
+                        ist = pytz.timezone('Asia/Kolkata')
+                        current_time = datetime.now(ist)
+                        
+                        hashed_password = self.utils.hash_password(password)
+                        self.db.users_collection.insert_one({
+                            "first_name": first_name,
+                            "last_name": last_name,
+                            "email": email,
+                            "mobile": mobile,
+                            "password": hashed_password,
+                            "status": "no",
+                            "created_at": current_time,
+                            "last_login": None
+                        })
+                        st.success("Registration successful! Please wait for admin approval.")
+                        
+                        st.session_state.registration_form = {
+                            'first_name': '', 'last_name': '', 
+                            'email': '', 'mobile': '', 
+                            'password': '', 'confirm_password': ''
+                        }
+                        
+                        st.session_state.page = "login"
+                    except Exception as e:
+                        if "duplicate key error" in str(e):
+                            st.error("Email or mobile number already registered.")
+                        else:
+                            self.logger.error(f"Registration error: {str(e)}")
+                            st.error("Registration failed. Please try again.")
+
+    def handle_login(self):
+        # Login method remains the same as in original code
+        st.title("Login")
+
+        with st.form("login_form"):
+            identifier = st.text_input("Email or Mobile Number")
+            password = st.text_input("Password", type="password")
+            submitted = st.form_submit_button("Login")
+
+            if submitted:
+                user = self.db.users_collection.find_one({
+                    "$or": [
+                        {"email": identifier},
+                        {"mobile": identifier}
+                    ]
+                })
+
+                if not user:
+                    st.error("Account not found.")
+                elif not self.utils.verify_password(password, user['password']):
+                    st.error("Incorrect password.")
+                elif user['status'] == "no":
+                    st.error("Your account is not active. Contact admin.")
+                else:
+                    ist = pytz.timezone('Asia/Kolkata')
+                    current_time = datetime.now(ist)
+                    
+                    self.db.users_collection.update_one(
+                        {"_id": user['_id']},
+                        {"$set": {"last_login": current_time}}
+                    )
+                    self.utils.log_activity(self.db, str(user['_id']), "login")
+                    st.success(f"Welcome {user['first_name']} {user['last_name']}!")
+                    st.session_state['logged_in'] = True
+                    st.session_state['user'] = user
+                    st.rerun()
     def __init__(self, db: DatabaseManager):
         self.db = db
         self.utils = Utils()
@@ -766,7 +958,7 @@ def main():
     if 'page' not in st.session_state:
         st.session_state.page = "login"
     
-    db = DatabaseManager(username="abhishelke297127", password="Abhi%402971")
+    db = DatabaseManager()
     auth_system = AuthenticationSystem(db)
     
     with st.sidebar:
@@ -798,5 +990,4 @@ def main():
             auth_system.handle_login()
 
 if __name__ == "__main__":
-    main()
-    
+    main()    
