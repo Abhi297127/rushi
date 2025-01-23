@@ -13,10 +13,6 @@ import logging
 from typing import Optional, Dict, Any
 import pytz
 import uuid
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
 
 # Configure logging
 logging.basicConfig(
