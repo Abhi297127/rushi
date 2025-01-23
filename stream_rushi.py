@@ -74,154 +74,150 @@ class Utils:
             "action": action,
             "timestamp": current_time
         })
-
-class AuthenticationSystem:
-    def __init__(self, db: DatabaseManager):
-        self.db = db
-        self.utils = Utils()
-
-    def handle_registration(self):
-        st.title("Register")
+def handle_registration(self):
+    st.title("Register")
+    
+    # Initialize session state for form fields
+    if 'registration_form' not in st.session_state:
+        st.session_state.registration_form = {
+            'first_name': '',
+            'last_name': '',
+            'email': '',
+            'mobile': '',
+            'password': '',
+            'confirm_password': ''
+        }
+    
+    with st.form("register_form", clear_on_submit=True):
+        # First Name and Last Name in the same row
+        col1, col2 = st.columns(2)
+        with col1:
+            first_name = st.text_input("First Name", 
+                value=st.session_state.registration_form['first_name'],
+                key="first_name_input")
+        with col2:
+            last_name = st.text_input("Last Name",
+                value=st.session_state.registration_form['last_name'],
+                key="last_name_input")
         
-        # Initialize session state for form fields
-        if 'registration_form' not in st.session_state:
-            st.session_state.registration_form = {
-                'first_name': '',
-                'last_name': '',
-                'email': '',
-                'mobile': '',
-                'password': '',
-                'confirm_password': ''
-            }
+        # Email and Mobile in the same row
+        col3, col4 = st.columns(2)
+        with col3:
+            email = st.text_input("Email",
+                value=st.session_state.registration_form['email'],
+                key="email_input")
+        with col4:
+            mobile = st.text_input("Mobile Number",
+                value=st.session_state.registration_form['mobile'],
+                key="mobile_input")
         
-        with st.form("register_form", clear_on_submit=True):
-            col1, col2 = st.columns(2)
-            with col1:
-                first_name = st.text_input("First Name", 
-                    value=st.session_state.registration_form['first_name'],
-                    key="first_name_input")
-                email = st.text_input("Email",
-                    value=st.session_state.registration_form['email'],
-                    key="email_input")
-                password = st.text_input("Password", 
-                    type="password",
-                    value=st.session_state.registration_form['password'],
-                    key="password_input")
-                
-            with col2:
-                last_name = st.text_input("Last Name",
-                    value=st.session_state.registration_form['last_name'],
-                    key="last_name_input")
-                mobile = st.text_input("Mobile Number",
-                    value=st.session_state.registration_form['mobile'],
-                    key="mobile_input")
-                confirm_password = st.text_input("Confirm Password",
-                    type="password",
-                    value=st.session_state.registration_form['confirm_password'],
-                    key="confirm_password_input")
+        # Password and Confirm Password in the same row
+        col5, col6 = st.columns(2)
+        with col5:
+            password = st.text_input("Password", 
+                type="password",
+                value=st.session_state.registration_form['password'],
+                key="password_input")
+        with col6:
+            confirm_password = st.text_input("Confirm Password",
+                type="password",
+                value=st.session_state.registration_form['confirm_password'],
+                key="confirm_password_input")
 
-            # Update session state
-            st.session_state.registration_form.update({
-                'first_name': first_name,
-                'last_name': last_name,
-                'email': email,
-                'mobile': mobile,
-                'password': password,
-                'confirm_password': confirm_password
-            })
+        # Update session state
+        st.session_state.registration_form.update({
+            'first_name': first_name,
+            'last_name': last_name,
+            'email': email,
+            'mobile': mobile,
+            'password': password,
+            'confirm_password': confirm_password
+        })
 
-            # Password requirements
-            if password:
-                if len(password) < 8:
-                    st.warning("Password must be at least 8 characters long")
-                if not any(c.isupper() for c in password):
-                    st.warning("Password must contain at least one uppercase letter")
-                if not any(c.isdigit() for c in password):
-                    st.warning("Password must contain at least one number")
+        # Comprehensive Password Validation
+        password_validations = []
+        if len(password) < 8:
+            password_validations.append("Must be at least 8 characters long")
+        if not any(c.isupper() for c in password):
+            password_validations.append("Must contain at least one uppercase letter")
+        if not any(c.isdigit() for c in password):
+            password_validations.append("Must contain at least one number")
+        if not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in password):
+            password_validations.append("Must contain at least one special character")
 
-            terms = st.checkbox("I agree to the Terms and Conditions")
-            submitted = st.form_submit_button("Register")
+        # Display password validation warnings
+        if password_validations:
+            st.warning("Password requirements:")
+            for validation in password_validations:
+                st.warning(validation)
 
-            if submitted:
-                if not all([first_name, last_name, email, mobile, password, confirm_password]):
-                    st.error("All fields are required.")
-                elif not self.utils.is_email_valid(email):
-                    st.error("Invalid email format.")
-                elif not self.utils.is_mobile_valid(mobile):
-                    st.error("Invalid mobile number format.")
-                elif password != confirm_password:
-                    st.error("Passwords do not match.")
-                elif not terms:
-                    st.error("Please accept the Terms and Conditions.")
-                else:
-                    try:
-                        ist = pytz.timezone('Asia/Kolkata')
-                        current_time = datetime.now(ist)
-                        
-                        hashed_password = self.utils.hash_password(password)
-                        self.db.users_collection.insert_one({
-                            "first_name": first_name,
-                            "last_name": last_name,
-                            "email": email,
-                            "mobile": mobile,
-                            "password": hashed_password,
-                            "status": "no",
-                            "created_at": current_time,
-                            "last_login": None
-                        })
-                        st.success("Registration successful! Please wait for admin approval.")
-                        st.session_state.registration_form = {
-                            'first_name': '',
-                            'last_name': '',
-                            'email': '',
-                            'mobile': '',
-                            'password': '',
-                            'confirm_password': ''
-                        }
-                        st.session_state.page = "login"
-                    except Exception as e:
-                        if "duplicate key error" in str(e):
-                            st.error("Email or mobile number already registered.")
-                        else:
-                            logger.error(f"Registration error: {str(e)}")
-                            st.error("Registration failed. Please try again.")
+        terms = st.checkbox("I agree to the Terms and Conditions")
+        submitted = st.form_submit_button("Register")
 
-    def handle_login(self):
-        st.title("Login")
+        if submitted:
+            # Comprehensive Form Validation
+            validation_errors = []
 
-        with st.form("login_form"):
-            identifier = st.text_input("Email or Mobile Number", key="login_identifier")
-            password = st.text_input("Password", type="password", key="login_password")
-            submitted = st.form_submit_button("Login")
+            # First Name and Last Name Validation
+            if not first_name or len(first_name.strip()) < 2:
+                validation_errors.append("First name must be at least 2 characters long")
+            if not last_name or len(last_name.strip()) < 2:
+                validation_errors.append("Last name must be at least 2 characters long")
 
-            if submitted:
-                user = self.db.users_collection.find_one({
-                    "$or": [
-                        {"email": identifier},
-                        {"mobile": identifier}
-                    ]
-                })
+            # Email Validation
+            if not self.utils.is_email_valid(email):
+                validation_errors.append("Invalid email format")
 
-                if not user:
-                    st.error("Account not found.")
-                elif not self.utils.verify_password(password, user['password']):
-                    st.error("Incorrect password.")
-                elif user['status'] == "no":
-                    st.error("Your account is not active. Contact admin.")
-                else:
+            # Mobile Number Validation
+            if not self.utils.is_mobile_valid(mobile):
+                validation_errors.append("Invalid mobile number format")
+
+            # Password Validation
+            if password != confirm_password:
+                validation_errors.append("Passwords do not match")
+            if password_validations:
+                validation_errors.append("Password does not meet requirements")
+
+            # Terms and Conditions
+            if not terms:
+                validation_errors.append("Please accept the Terms and Conditions")
+
+            # Display or Process Registration
+            if validation_errors:
+                for error in validation_errors:
+                    st.error(error)
+            else:
+                try:
                     ist = pytz.timezone('Asia/Kolkata')
                     current_time = datetime.now(ist)
                     
-                    self.db.users_collection.update_one(
-                        {"_id": user['_id']},
-                        {"$set": {"last_login": current_time}}
-                    )
-                    self.utils.log_activity(self.db, str(user['_id']), "login")
-                    st.success(f"Welcome {user['first_name']} {user['last_name']}!")
-                    st.session_state['logged_in'] = True
-                    st.session_state['user'] = user
-                    st.rerun()
-
+                    hashed_password = self.utils.hash_password(password)
+                    self.db.users_collection.insert_one({
+                        "first_name": first_name,
+                        "last_name": last_name,
+                        "email": email,
+                        "mobile": mobile,
+                        "password": hashed_password,
+                        "status": "no",
+                        "created_at": current_time,
+                        "last_login": None
+                    })
+                    st.success("Registration successful! Please wait for admin approval.")
+                    st.session_state.registration_form = {
+                        'first_name': '',
+                        'last_name': '',
+                        'email': '',
+                        'mobile': '',
+                        'password': '',
+                        'confirm_password': ''
+                    }
+                    st.session_state.page = "login"
+                except Exception as e:
+                    if "duplicate key error" in str(e):
+                        st.error("Email or mobile number already registered.")
+                    else:
+                        logger.error(f"Registration error: {str(e)}")
+                        st.error("Registration failed. Please try again.")
 class AdminPanel:
     def __init__(self, db: DatabaseManager):
         self.db = db
