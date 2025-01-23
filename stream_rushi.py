@@ -24,8 +24,8 @@ logger = logging.getLogger(__name__)
 class DatabaseManager:
     def __init__(self):
         # Retrieve credentials from environment variables
-        username = os.getenv('MONGODB_USERNAME')
-        password = os.getenv('MONGODB_PASSWORD')
+        username = "abhishelke"
+        password = "Abhi%402971"
         
         if not username or not password:
             raise ValueError("MongoDB credentials not configured")
