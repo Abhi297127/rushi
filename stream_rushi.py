@@ -95,9 +95,9 @@ class AuthenticationSystem:
             
             col5, col6 = st.columns(2)
             with col5:
-                password = st.text_input("Password")
+                password = st.text_input("Password", type="password")
             with col6:
-                confirm_password = st.text_input("Confirm Password")
+                confirm_password = st.text_input("Confirm Password", type="password")
 
 
             # Password requirements
