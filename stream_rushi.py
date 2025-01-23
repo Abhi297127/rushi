@@ -78,7 +78,8 @@ class AuthenticationSystem:
 
     def handle_registration(self):
         st.title("Register")
-        with st.form("registration_form", clear_on_submit=True):
+        
+        with st.form("register_form", clear_on_submit=True):
             # Form inputs (same as original code)
             col1, col2 = st.columns(2)
             with col1:
