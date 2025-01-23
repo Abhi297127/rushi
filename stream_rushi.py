@@ -11,6 +11,7 @@ import phonenumbers
 import logging
 from typing import Optional, Dict, Any
 import pytz
+import uuid
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -79,11 +80,10 @@ class AuthenticationSystem:
     def __init__(self, db: DatabaseManager):
         self.db = db
         self.utils = Utils()
+        self.logger = logging.getLogger(__name__)
 
     def handle_registration(self):
-        st.title("Register")
-        
-        # Initialize session state for form fields
+        # Initialize session state for form fields if not exists
         if 'registration_form' not in st.session_state:
             st.session_state.registration_form = {
                 'first_name': '',
@@ -94,28 +94,31 @@ class AuthenticationSystem:
                 'confirm_password': ''
             }
         
-        with st.form("register_form", clear_on_submit=True):
+        # Use a unique form key to prevent duplicate form errors
+        form_key = f"register_form_{uuid.uuid4().hex}"
+        
+        with st.form(form_key, clear_on_submit=True):
             # First Name and Last Name in the same row
             col1, col2 = st.columns(2)
             with col1:
                 first_name = st.text_input("First Name", 
                     value=st.session_state.registration_form['first_name'],
-                    key="first_name_input")
+                    key=f"first_name_input_{uuid.uuid4().hex}")
             with col2:
                 last_name = st.text_input("Last Name",
                     value=st.session_state.registration_form['last_name'],
-                    key="last_name_input")
+                    key=f"last_name_input_{uuid.uuid4().hex}")
             
             # Email and Mobile in the same row
             col3, col4 = st.columns(2)
             with col3:
                 email = st.text_input("Email",
                     value=st.session_state.registration_form['email'],
-                    key="email_input")
+                    key=f"email_input_{uuid.uuid4().hex}")
             with col4:
                 mobile = st.text_input("Mobile Number",
                     value=st.session_state.registration_form['mobile'],
-                    key="mobile_input")
+                    key=f"mobile_input_{uuid.uuid4().hex}")
             
             # Password and Confirm Password in the same row
             col5, col6 = st.columns(2)
@@ -123,12 +126,12 @@ class AuthenticationSystem:
                 password = st.text_input("Password", 
                     type="password",
                     value=st.session_state.registration_form['password'],
-                    key="password_input")
+                    key=f"password_input_{uuid.uuid4().hex}")
             with col6:
                 confirm_password = st.text_input("Confirm Password",
                     type="password",
                     value=st.session_state.registration_form['confirm_password'],
-                    key="confirm_password_input")
+                    key=f"confirm_password_input_{uuid.uuid4().hex}")
 
             # Update session state
             st.session_state.registration_form.update({
@@ -142,14 +145,15 @@ class AuthenticationSystem:
 
             # Comprehensive Password Validation
             password_validations = []
-            if len(password) < 8:
-                password_validations.append("Must be at least 8 characters long")
-            if not any(c.isupper() for c in password):
-                password_validations.append("Must contain at least one uppercase letter")
-            if not any(c.isdigit() for c in password):
-                password_validations.append("Must contain at least one number")
-            if not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in password):
-                password_validations.append("Must contain at least one special character")
+            if password:
+                if len(password) < 8:
+                    password_validations.append("Must be at least 8 characters long")
+                if not any(c.isupper() for c in password):
+                    password_validations.append("Must contain at least one uppercase letter")
+                if not any(c.isdigit() for c in password):
+                    password_validations.append("Must contain at least one number")
+                if not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in password):
+                    password_validations.append("Must contain at least one special character")
 
             # Display password validation warnings
             if password_validations:
@@ -209,110 +213,8 @@ class AuthenticationSystem:
                             "last_login": None
                         })
                         st.success("Registration successful! Please wait for admin approval.")
-                        st.session_state.registration_form = {
-                            'first_name': '',
-                            'last_name': '',
-                            'email': '',
-                            'mobile': '',
-                            'password': '',
-                            'confirm_password': ''
-                        }
-                        st.session_state.page = "login"
-                    except Exception as e:
-                        if "duplicate key error" in str(e):
-                            st.error("Email or mobile number already registered.")
-                        else:
-                            logger.error(f"Registration error: {str(e)}")
-                            st.error("Registration failed. Please try again.")
-        
-        
-        # Initialize session state for form fields
-        if 'registration_form' not in st.session_state:
-            st.session_state.registration_form = {
-                'first_name': '',
-                'last_name': '',
-                'email': '',
-                'mobile': '',
-                'password': '',
-                'confirm_password': ''
-            }
-        
-        with st.form("register_form", clear_on_submit=True):
-            col1, col2 = st.columns(2)
-            with col1:
-                first_name = st.text_input("First Name", 
-                    value=st.session_state.registration_form['first_name'],
-                    key="first_name_input")
-                email = st.text_input("Email",
-                    value=st.session_state.registration_form['email'],
-                    key="email_input")
-                password = st.text_input("Password", 
-                    type="password",
-                    value=st.session_state.registration_form['password'],
-                    key="password_input")
-                
-            with col2:
-                last_name = st.text_input("Last Name",
-                    value=st.session_state.registration_form['last_name'],
-                    key="last_name_input")
-                mobile = st.text_input("Mobile Number",
-                    value=st.session_state.registration_form['mobile'],
-                    key="mobile_input")
-                confirm_password = st.text_input("Confirm Password",
-                    type="password",
-                    value=st.session_state.registration_form['confirm_password'],
-                    key="confirm_password_input")
-
-            # Update session state
-            st.session_state.registration_form.update({
-                'first_name': first_name,
-                'last_name': last_name,
-                'email': email,
-                'mobile': mobile,
-                'password': password,
-                'confirm_password': confirm_password
-            })
-
-            # Password requirements
-            if password:
-                if len(password) < 8:
-                    st.warning("Password must be at least 8 characters long")
-                if not any(c.isupper() for c in password):
-                    st.warning("Password must contain at least one uppercase letter")
-                if not any(c.isdigit() for c in password):
-                    st.warning("Password must contain at least one number")
-
-            terms = st.checkbox("I agree to the Terms and Conditions")
-            submitted = st.form_submit_button("Register")
-
-            if submitted:
-                if not all([first_name, last_name, email, mobile, password, confirm_password]):
-                    st.error("All fields are required.")
-                elif not self.utils.is_email_valid(email):
-                    st.error("Invalid email format.")
-                elif not self.utils.is_mobile_valid(mobile):
-                    st.error("Invalid mobile number format.")
-                elif password != confirm_password:
-                    st.error("Passwords do not match.")
-                elif not terms:
-                    st.error("Please accept the Terms and Conditions.")
-                else:
-                    try:
-                        ist = pytz.timezone('Asia/Kolkata')
-                        current_time = datetime.now(ist)
                         
-                        hashed_password = self.utils.hash_password(password)
-                        self.db.users_collection.insert_one({
-                            "first_name": first_name,
-                            "last_name": last_name,
-                            "email": email,
-                            "mobile": mobile,
-                            "password": hashed_password,
-                            "status": "no",
-                            "created_at": current_time,
-                            "last_login": None
-                        })
-                        st.success("Registration successful! Please wait for admin approval.")
+                        # Reset registration form in session state
                         st.session_state.registration_form = {
                             'first_name': '',
                             'last_name': '',
@@ -321,12 +223,14 @@ class AuthenticationSystem:
                             'password': '',
                             'confirm_password': ''
                         }
+                        
+                        # Redirect to login page
                         st.session_state.page = "login"
                     except Exception as e:
                         if "duplicate key error" in str(e):
                             st.error("Email or mobile number already registered.")
                         else:
-                            logger.error(f"Registration error: {str(e)}")
+                            self.logger.error(f"Registration error: {str(e)}")
                             st.error("Registration failed. Please try again.")
 
     def handle_login(self):
@@ -364,7 +268,6 @@ class AuthenticationSystem:
                     st.session_state['logged_in'] = True
                     st.session_state['user'] = user
                     st.rerun()
-
 class AdminPanel:
     def __init__(self, db: DatabaseManager):
         self.db = db
