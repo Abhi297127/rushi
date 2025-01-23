@@ -78,32 +78,34 @@ class AuthenticationSystem:
 
     def handle_registration(self):
         st.title("Register")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            first_name = st.text_input("First Name", 
-                value=st.session_state.registration_form['first_name'])
-        with col2:
-            last_name = st.text_input("Last Name",
-                value=st.session_state.registration_form['last_name'])
-        
-        col3, col4 = st.columns(2)
-        with col3:
-            email = st.text_input("Email",
-                value=st.session_state.registration_form['email'])
-        with col4:
-            mobile = st.text_input("Mobile Number",
-                value=st.session_state.registration_form['mobile'])
-        
-        col5, col6 = st.columns(2)
-        with col5:
-            password = st.text_input("Password", 
-                type="password",
-                value=st.session_state.registration_form['password'])
-        with col6:
-            confirm_password = st.text_input("Confirm Password",
-                type="password",
-                value=st.session_state.registration_form['confirm_password'])
+        with st.form("registration_form", clear_on_submit=True):
+            # Form inputs (same as original code)
+            col1, col2 = st.columns(2)
+            with col1:
+                first_name = st.text_input("First Name", 
+                    value=st.session_state.registration_form['first_name'])
+            with col2:
+                last_name = st.text_input("Last Name",
+                    value=st.session_state.registration_form['last_name'])
+            
+            col3, col4 = st.columns(2)
+            with col3:
+                email = st.text_input("Email",
+                    value=st.session_state.registration_form['email'])
+            with col4:
+                mobile = st.text_input("Mobile Number",
+                    value=st.session_state.registration_form['mobile'])
+            
+            col5, col6 = st.columns(2)
+            with col5:
+                password = st.text_input("Password", 
+                    type="password",
+                    value=st.session_state.registration_form['password'])
+            with col6:
+                confirm_password = st.text_input("Confirm Password",
+                    type="password",
+                    value=st.session_state.registration_form['confirm_password'])
+
 
             # Password requirements
             if password:
