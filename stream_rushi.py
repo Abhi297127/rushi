@@ -712,6 +712,8 @@ def main():
                 st.session_state.user = None
                 st.session_state.page = "login"
                 st.rerun()
+            if st.sidebar.button("🔄 Refresh", key="refresh"):
+                st.rerun()
         else:
             page = st.radio("Choose Option", ["🔑 Login", "📝 Register"])
             st.session_state.page = page.split()[-1].lower()
