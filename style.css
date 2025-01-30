@@ -1,0 +1,578 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background: #fff;
+    overflow-x: hidden;
+    color: #333;
+}
+
+/* Page 1 - Input */
+.page1 {
+    position: fixed;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+    transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 2;
+}
+
+.page1.hidden {
+    transform: translateY(-100%) scale(0.9);
+    opacity: 0;
+}
+
+.name-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.name-field {
+    padding: 15px 25px;
+    font-size: 1.1rem;
+    border: 2px solid #d4af37;
+    border-radius: 30px;
+    width: 300px;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.submit-btn {
+    padding: 12px 45px;
+    font-size: 1.2rem;
+    background: linear-gradient(45deg, #d4af37, #f1c232);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+}
+
+/* Page 2 - Invitation */
+.page2 {
+    display: none;
+    opacity: 0;
+    animation: fadeIn 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    min-height: 100vh;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+.couple-names {
+    margin: 30px 0;
+    text-align: center;
+}
+
+.couple-names h2 {
+    font-family: 'Great Vibes', cursive;
+    font-size: 3rem;
+    color: #d4af37;
+    margin: 10px 0;
+}
+
+.couple-names span {
+    font-size: 2rem;
+    color: #d4af37;
+}
+
+.family-tree {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin: 30px 0;
+}
+
+.groom-family, .bride-family {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.timing {
+    background: rgba(212, 175, 55, 0.1);
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+}
+
+/* Rest of the CSS remains the same as in the original file */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background: #fff;
+    overflow-x: hidden;
+    color: #333;
+}
+
+/* Page 1 - Input */
+.page1 {
+    position: fixed;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+    transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 2;
+}
+
+.page1.hidden {
+    transform: translateY(-100%) scale(0.9);
+    opacity: 0;
+}
+
+.name-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.name-field {
+    padding: 15px 25px;
+    font-size: 1.1rem;
+    border: 2px solid #d4af37;
+    border-radius: 30px;
+    width: 300px;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.name-field:focus {
+    border-color: #b38f1d;
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+    transform: translateY(-2px);
+}
+
+.submit-btn {
+    padding: 12px 45px;
+    font-size: 1.2rem;
+    background: linear-gradient(45deg, #d4af37, #f1c232);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+}
+
+.submit-btn:hover {
+    transform: scale(1.05) translateY(-2px);
+    box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4);
+}
+
+/* Page 2 - Invitation */
+.page2 {
+    display: none;
+    opacity: 0;
+    animation: fadeIn 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    min-height: 100vh;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Enhanced Sidebar */
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 300px;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 30px;
+    box-shadow: 2px 0 20px rgba(0,0,0,0.1);
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+}
+
+.sidebar.active {
+    transform: translateX(0);
+}
+
+.toggle-sidebar {
+    position: fixed;
+    left: 20px;
+    top: 20px;
+    z-index: 1001;
+    background: #d4af37;
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    color: white;
+    font-size: 1.5rem;
+}
+
+.toggle-sidebar:hover {
+    transform: scale(1.1);
+    background: #b38f1d;
+}
+
+.sidebar h3 {
+    color: #d4af37;
+    margin: 20px 0 10px;
+    font-size: 1.3rem;
+}
+
+.nav-links {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 40px;
+}
+
+.nav-link {
+    position: relative;
+    padding: 15px 25px;
+    background: rgba(212, 175, 55, 0.1);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+.nav-link::before {
+    content: '';
+    position: absolute;
+    left: -100%;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.nav-link:hover {
+    background: rgba(212, 175, 55, 0.2);
+    transform: translateX(5px);
+}
+
+.nav-link:hover::before {
+    left: 100%;
+}
+
+.nav-link.active {
+    background: rgba(212, 175, 55, 0.3);
+    transform: translateX(10px);
+    font-weight: 500;
+}
+
+.main-content {
+    margin-left: 300px;
+    padding: 50px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+/* Timer */
+.timer {
+    background: rgba(212, 175, 55, 0.9);
+    padding: 30px;
+    border-radius: 15px;
+    margin: 30px 0;
+    display: flex;
+    gap: 25px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.timer-item {
+    text-align: center;
+    min-width: 100px;
+}
+
+.timer-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: white;
+}
+
+.timer-label {
+    color: white;
+    font-size: 1.1rem;
+    margin-top: 5px;
+}
+
+/* Sections */
+.section {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    display: none;
+}
+
+.section.active-section {
+    opacity: 1;
+    transform: translateY(0);
+    display: block;
+}
+
+h1 {
+    font-family: 'Great Vibes', cursive;
+    font-size: 4.5rem;
+    color: #d4af37;
+    margin: 30px 0;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+}
+
+.section h2 {
+    font-size: 2.5rem;
+    color: #d4af37;
+    margin-bottom: 20px;
+}
+
+.section p {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    margin: 10px 0;
+}
+
+/* Visitor Counter */
+.visitor-counter {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(212, 175, 55, 0.9);
+    padding: 12px 25px;
+    border-radius: 25px;
+    font-size: 1rem;
+    color: white;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    animation: slideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(100px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Mobile Responsive Design */
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateY(-100%);
+        width: 100%;
+        height: auto;
+        max-height: 80vh;
+    }
+
+    .sidebar.active {
+        transform: translateY(0);
+    }
+
+    .toggle-sidebar {
+        top: 10px;
+        left: 10px;
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+
+    .nav-links {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+        padding: 10px;
+    }
+
+    .nav-link {
+        margin: 0;
+        text-align: center;
+        transform: none !important;
+    }
+
+    .main-content {
+        margin-left: 0;
+        padding: 30px;
+    }
+
+    .timer {
+        flex-direction: column;
+        gap: 15px;
+        padding: 20px;
+    }
+
+    .timer-item {
+        min-width: auto;
+    }
+
+    h1 {
+        font-size: 3rem;
+    }
+
+    .section h2 {
+        font-size: 2rem;
+    }
+
+    .visitor-counter {
+        bottom: 10px;
+        right: 10px;
+        font-size: 0.9rem;
+    }
+}
+/* Include all the sidebar, timer, responsive design, and animation styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Mukta', sans-serif;
+    background: #fff;
+    overflow-x: hidden;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* Page 1 - Input */
+.page1 {
+    position: fixed;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+    transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 2;
+}
+
+.page1.hidden {
+    transform: translateY(-100%) scale(0.9);
+    opacity: 0;
+}
+
+.name-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.name-form h2 {
+    text-align: center;
+    color: #d4af37;
+    font-size: 1.8rem;
+}
+
+.name-field {
+    padding: 15px 25px;
+    font-size: 1.1rem;
+    border: 2px solid #d4af37;
+    border-radius: 30px;
+    width: 300px;
+    transition: all 0.3s ease;
+    outline: none;
+    font-family: 'Mukta', sans-serif;
+}
+
+.submit-btn {
+    padding: 12px 45px;
+    font-size: 1.2rem;
+    background: linear-gradient(45deg, #d4af37, #f1c232);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+    font-family: 'Mukta', sans-serif;
+}
+
+/* Family Tree Styles */
+.family-tree {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin: 30px 0;
+}
+
+.groom-family, .bride-family {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.family-members {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.family-members h4 {
+    color: #d4af37;
+    margin-bottom: 10px;
+}
+
+.family-members p {
+    margin: 5px 0;
+    font-size: 0.95rem;
+}
+
+/* Timer customization for Marathi */
+.timer-label {
+    font-size: 1rem;
+}
+
+.timer-number {
+    font-family: 'Mukta', sans-serif;
+}
+
+/* Rest of the CSS remains same as before */
+/* Include all the sidebar, timer, responsive design, and animation styles */
